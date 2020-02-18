@@ -31,6 +31,8 @@ preprocess = Preprocess(data)
 mean, std = preprocess.normalization()
 train_dataset, val_dataset, shape = preprocess.create_dataset()
 
+normalize = np.array([mean, std])
+np.savetxt('normalize.csv', normalize, delimiter=", ")
 
 # Model
 model = tf.keras.Sequential([
@@ -45,9 +47,10 @@ model.fit(
     validation_data=val_dataset, validation_steps=50
 )
 
-#model.save("model.h5")
-#tfjs.converters.save_keras_model(model, "model")
-
+model.save("saved_model/model.h5")
+tfjs.converters.save_keras_model(model, "saved_model/tfjs")
+'''
 for x, y in val_dataset:
     plot = show_plot([x[0].numpy(), y[0].numpy(), model.predict(x)[0]], 0, 'LSTM model')
     plot.show()
+'''

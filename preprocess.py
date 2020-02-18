@@ -63,3 +63,6 @@ if __name__ == "__main__":
 
     print(shape)
     print(train_dataset)
+
+    normalize = np.array([mean, std])
+    np.savetxt('normalize.csv', normalize, delimiter=", ")

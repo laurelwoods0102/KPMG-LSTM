@@ -3,7 +3,7 @@
     "PAST_HISTORY" : 32,
     "FUTURE_TARGET" : 1,
     "BATCH_SIZE" : 64,
-    "EVALUATION_INTERVAL" : 20,
-    "EPOCHS" : 1,
+    "EVALUATION_INTERVAL" : 200,
+    "EPOCHS" : 10,
     "SEED" : 0
 }
