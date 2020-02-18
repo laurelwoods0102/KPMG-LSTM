@@ -5,12 +5,14 @@ import pandas as pd
 import os
 
 import tensorflow as tf
-physical_devices = tf.config.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
+from tensorflow import keras
+
+#physical_devices = tf.config.list_physical_devices('GPU')
+#tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
 
 
 original = pd.read_csv("./data/lalavla-강남구-Nail.csv")
-df = original[:500]
+df = original[:576]
 
 def univariate_data(dataset, start_index, end_index, history_size, target_size):
     data = list()
@@ -27,28 +29,8 @@ def univariate_data(dataset, start_index, end_index, history_size, target_size):
         labels.append(y.values)
     return np.array(data), np.array(labels)
 
-TRAIN_SPLIT = 400
-
-tf.random.set_seed(13)
-
-uni_data = df["qty"]
-uni_data.index = df["date"]
-
-# Normalization
-train_mean = uni_data[:TRAIN_SPLIT].mean()
-train_std = uni_data[:TRAIN_SPLIT].std()
-
-train_data = (uni_data - train_mean)/train_std
-#data = tf.keras.utils.normalize(np.array(uni_data))
-
-past_history = 64
-future_target = 1
-
-x_train, y_train = univariate_data(train_data, 0, TRAIN_SPLIT, past_history, future_target)
-x_val, y_val = univariate_data(train_data, TRAIN_SPLIT, None, past_history, future_target)
-
 def create_time_steps(length):
-  return list(range(-length, 0))
+    return list(range(-length, 0))
 
 def show_plot(plot_data, delta, title):
     labels = ['History', 'True Future', 'Model Prediction']
@@ -71,13 +53,25 @@ def show_plot(plot_data, delta, title):
     plt.xlabel('Time-Step')
     return plt
 
-def baseline(history):
-    return np.mean(history)
+TRAIN_SPLIT = 400
 
+#tf.random.set_seed(13)
 
-#show_plot([x_train[0], y_train[0]], 0, 'Sample Example')
-#show_plot([x_train[0], y_train[0], baseline(x_train[0])], 0, 'Baseline Prediction Example')
-#plt.show()
+uni_data = df["qty"]
+uni_data.index = df["date"]
+
+# Normalization
+train_mean = uni_data[:TRAIN_SPLIT].mean()
+train_std = uni_data[:TRAIN_SPLIT].std()
+
+train_data = (uni_data - train_mean)/train_std
+#data = tf.keras.utils.normalize(np.array(uni_data))
+
+past_history = 32
+future_target = 1
+
+x_train, y_train = univariate_data(train_data, 0, TRAIN_SPLIT, past_history, future_target)
+x_val, y_val = univariate_data(train_data, TRAIN_SPLIT, None, past_history, future_target)
 
 BATCH_SIZE = 256
 BUFFER_SIZE = 10000
@@ -87,8 +81,8 @@ train_univariate = train_univariate.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZ
 
 val_univariate = tf.data.Dataset.from_tensor_slices((x_val, y_val))
 val_univariate = val_univariate.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
-
-
+print(x_train.shape)
+'''
 model = tf.keras.Sequential([
     tf.keras.layers.LSTM(8, input_shape=x_train.shape[1:]),
     tf.keras.layers.Dense(1)
@@ -98,8 +92,8 @@ model.compile(optimizer='adam', loss='mae')
 #for x, y in val_univariate.take(1):
 #    print(model.predict(x).shape)
 
-EVALUATION_INTERVAL = 200
-EPOCHS = 20
+EVALUATION_INTERVAL = 20
+EPOCHS = 1
 
 model.fit(
     train_univariate, epochs=EPOCHS,
@@ -107,6 +101,37 @@ model.fit(
     validation_data=val_univariate, validation_steps=50
 )
 
+#model.save('model.h5')
+import tensorflowjs
+tensorflowjs.converters.save_keras_model(model, "js")
+
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS, tf.lite.OpsSet.TFLITE_SELECT_TF_OPS]
+converter.allow_custom_ops = True
+tflite_model = converter.convert()
+
+open("converted_model.tflite", "wb").wirte(tflite_model)
+
+
 for x, y in val_univariate:
     plot = show_plot([x[0].numpy(), y[0].numpy(), model.predict(x)[0]], 0, 'LSTM model')
     plot.show()
+
+test_df = original[500:500+past_history]
+
+test_data = test_df["qty"]
+test_data.index = test_df["date"]
+
+print(test_data.head())
+
+test_data = (test_data - train_mean)/train_std
+
+test_data = np.reshape(test_data.to_numpy(), (1, past_history, 1))
+print(test_data)
+#test_univariate = tf.data.Dataset.from_tensor_slices((test_data))
+print(model.predict(test_data))
+
+#plot = show_plot([x_test[0].numpy(), y_test[0].numpy(), model.predict(x_test)[0]], 0, 'LSTM model')
+#plot.show()
+'''

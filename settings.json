@@ -1,0 +1,9 @@
+{
+    "TRAIN_SPLIT" : 500,
+    "PAST_HISTORY" : 32,
+    "FUTURE_TARGET" : 1,
+    "BATCH_SIZE" : 64,
+    "EVALUATION_INTERVAL" : 20,
+    "EPOCHS" : 1,
+    "SEED" : 0
+}
