@@ -22,7 +22,7 @@ if settings["SEED"]:
 
 # Dataset
 dataframe = pd.read_csv("./data/lalavla-강남구-Nail.csv")
-dataframe = dataframe[:576]
+#dataframe = dataframe[:576]
 
 data = dataframe["qty"]
 data.index = dataframe["date"]

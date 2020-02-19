@@ -52,12 +52,8 @@ class Preprocess():
     
 if __name__ == "__main__":
     dataframe = pd.read_csv("./data/lalavla-강남구-Nail.csv")
-    dataframe = dataframe[:576]
 
-    data = dataframe["qty"]
-    data.index = dataframe["date"]
-
-    preprocess = Preprocess(data)
+    preprocess = Preprocess(dataframe)
     mean, std = preprocess.normalization()
     train_dataset, val_dataset, shape = preprocess.create_dataset()
 
